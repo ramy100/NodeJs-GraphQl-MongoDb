@@ -35,7 +35,7 @@ const userTypeDef = gql`
   type Mutation {
     register(newUser: RegisterUserInput): registerOrLoginResponse!
     login(userInfo: LoginUserInput): registerOrLoginResponse!
-    addfriend(myId: ID!, friendId: ID!): response
+    sendFriendRequest(friendId: ID!): response
   }
 
   interface mutationResponse {

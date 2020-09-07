@@ -11,8 +11,8 @@ const Mutation = {
 
   login: (_, { userInfo }) => UserGraqhQl.login(userInfo),
 
-  addfriend: (_, { myId, friendId }, { user }) =>
-    UserGraqhQl.addFriend(myId, friendId, user),
+  sendFriendRequest: (_, { friendId }, { user }) =>
+    UserGraqhQl.sendFriendRequest(user, friendId),
 };
 
 const token = {

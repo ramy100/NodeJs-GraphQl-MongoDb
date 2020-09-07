@@ -76,29 +76,50 @@ const UserGraqhQl = {
     );
   },
 
-  addFriend: async (myId, friendId, user) => {
-    if (user.id !== myId)
-      return new GraphQlResponse(403, false, "UnAuthorized Action!");
-    if (myId == friendId)
+  sendFriendRequest: async (user, friendId) => {
+    if (!user) return new GraphQlResponse(403, false, "Not Logged In!");
+
+    if (user.id == friendId)
       return new GraphQlResponse(403, false, "Can't Add Your Self!");
     //   need transaction here
     try {
-      const user = await User.findById(myId);
       const friend = await User.findById(friendId);
-      if (!user || !friend) {
+      const currentUser = await User.findById(user.id);
+      if (!currentUser || !friend) {
         return new GraphQlResponse(404, false, "User Not Found!");
       }
-      if (user.friends.includes(friendId) || friend.friends.includes(myId)) {
-        return new GraphQlResponse(403, false, "Already Added this friend!");
+
+      // if those users are friends already
+      if (
+        currentUser.friends.includes(friendId) ||
+        friend.friends.includes(user.id)
+      ) {
+        return new GraphQlResponse(403, false, "Already Friends!");
       }
-      user.friends.push(friendId);
-      friend.friends.push(myId);
-      await user.save();
+      // if current user already added that friend
+      if (friend.friendRequests.includes(user.id)) {
+        return new GraphQlResponse(
+          403,
+          false,
+          "You previous add request still pending!"
+        );
+      }
+      // if already had a friend request sent from that user add him immediatly
+      if (currentUser.friendRequests.includes(friendId)) {
+        friend.friends.push(user.id);
+        currentUser.friends.push(friendId);
+        currentUser.friendRequests.pull(friendId);
+        await currentUser.save();
+        await friend.save();
+        return new GraphQlResponse(200, true, "You Are Friends Now!");
+      }
+      friend.friendRequests.push(user.id);
       await friend.save();
     } catch (error) {
+      console.log(error);
       return new GraphQlResponse(500, false, "Server Error!");
     }
-    return new GraphQlResponse(200, true, "User Added!");
+    return new GraphQlResponse(200, true, "Send Friend Request!");
   },
 };
 
