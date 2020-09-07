@@ -2,7 +2,7 @@ const User = require("../../models/Users");
 const { GraphQlResponseWithToken, GraphQlResponse } = require("../Response");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
+const { pubsub } = require("./resolver");
 const getToken = ({ id, username, email }) =>
   jwt.sign(
     {
@@ -76,7 +76,7 @@ const UserGraqhQl = {
     );
   },
 
-  sendFriendRequest: async (user, friendId) => {
+  sendFriendRequest: async (user, friendId, pubsub) => {
     if (!user) return new GraphQlResponse(403, false, "Not Logged In!");
 
     if (user.id == friendId)
@@ -115,11 +115,13 @@ const UserGraqhQl = {
       }
       friend.friendRequests.push(user.id);
       await friend.save();
+      pubsub.publish("FRIEND_REQUEST_RECIEVED", {
+        friendRequests: [currentUser, friend],
+      });
     } catch (error) {
-      console.log(error);
       return new GraphQlResponse(500, false, "Server Error!");
     }
-    return new GraphQlResponse(200, true, "Send Friend Request!");
+    return new GraphQlResponse(200, true, "Sent Friend Request!");
   },
 };
 

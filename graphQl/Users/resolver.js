@@ -11,8 +11,16 @@ const Mutation = {
 
   login: (_, { userInfo }) => UserGraqhQl.login(userInfo),
 
-  sendFriendRequest: (_, { friendId }, { user }) =>
-    UserGraqhQl.sendFriendRequest(user, friendId),
+  sendFriendRequest: (_, { friendId }, { user, pubsub }) =>
+    UserGraqhQl.sendFriendRequest(user, friendId, pubsub),
+};
+
+const Subscription = {
+  friendRequests: {
+    // Additional event labels can be passed to asyncIterator creation
+    subscribe: (_, __, { pubsub }) =>
+      pubsub.asyncIterator("FRIEND_REQUEST_RECIEVED"),
+  },
 };
 
 const token = {
@@ -32,6 +40,7 @@ const userResolver = {
   token,
   Query,
   Mutation,
+  Subscription,
 };
 
 module.exports = {

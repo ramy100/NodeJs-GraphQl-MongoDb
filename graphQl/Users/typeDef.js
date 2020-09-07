@@ -3,6 +3,10 @@ const { gql } = require("apollo-server");
 const userTypeDef = gql`
   scalar DateTime
 
+  type Subscription {
+    friendRequests: [User!]
+  }
+
   type User {
     id: ID!
     username: String!

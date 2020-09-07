@@ -1,7 +1,9 @@
 const db = require("./config/db.js");
-const { ApolloServer } = require("apollo-server");
+const { ApolloServer, PubSub } = require("apollo-server");
 const { resolvers, typeDefs } = require("./graphQl/index");
 const jwt = require("jsonwebtoken");
+
+const pubsub = new PubSub();
 
 const getUser = (token) => {
   try {
@@ -15,13 +17,25 @@ const getUser = (token) => {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req, res }) => {
-    const token = req.headers.authorization || "";
-    if (token) {
-      const user = getUser(token);
-      return {
-        user,
-      };
+  context: ({ req, connection }) => {
+    if (connection) {
+      const token = connection.context.authorization;
+      if (token) {
+        const user = getUser(token);
+        return {
+          user,
+          pubsub,
+        };
+      }
+    } else {
+      const token = req.headers.authorization || "";
+      if (token) {
+        const user = getUser(token);
+        return {
+          user,
+          pubsub,
+        };
+      }
     }
   },
 });
