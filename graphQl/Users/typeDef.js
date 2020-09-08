@@ -4,7 +4,7 @@ const userTypeDef = gql`
   scalar DateTime
 
   type Subscription {
-    friendRequests: [User!]
+    friendRequests(userId: ID!): [User!]
   }
 
   type User {
