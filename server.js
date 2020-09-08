@@ -17,26 +17,33 @@ const getUser = (token) => {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  subscriptions: {
+    onConnect: () => {
+      console.log("connected");
+    },
+    onDisconnect: () => {
+      console.log("dc");
+    },
+  },
+  // context: ({ req, connection }) => ({ pubsub }),
   context: ({ req, connection }) => {
+    const returnObj = {};
     if (connection) {
       const token = connection.context.authorization;
       if (token) {
         const user = getUser(token);
-        return {
-          user,
-          pubsub,
-        };
+        returnObj.user = user;
       }
     } else {
       const token = req.headers.authorization || "";
       if (token) {
         const user = getUser(token);
-        return {
-          user,
-          pubsub,
-        };
+        returnObj.user = user;
       }
     }
+    returnObj.pubsub = pubsub;
+    console.log("trash");
+    return returnObj;
   },
 });
 
