@@ -1,7 +1,10 @@
 const User = require("./User.model");
 const { GraphQlResponseWithToken, GraphQlResponse } = require("../Response");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const MongoFunctions = require("../utils/mongo.utils");
+const AuthFunctions = require("../utils/auth.utils");
+
+const UserFunctions = new MongoFunctions(User);
 
 const UserGraqhQl = {
   getUser: (id) => {
@@ -16,18 +19,22 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Password Confirmation Fails!");
     }
 
-    const user = await standAloneFunctions.getUserByEmail(email);
+    const user = await UserFunctions.getDocumentByValue({ email });
     if (user) {
       return new GraphQlResponse(403, false, "User Already Exists!");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({ username, email, password: hashedPassword });
+    const newUser = UserFunctions.createNewObject({
+      username,
+      email,
+      password: hashedPassword,
+    });
 
     try {
-      const response = await standAloneFunctions.saveUser(newUser);
-      const token = standAloneFunctions.getToken(response);
+      const response = await UserFunctions.saveDocument(newUser);
+      const token = AuthFunctions.getToken(response);
       const registeredUser = {
         id: response._id,
         ...response._doc,
@@ -46,7 +53,7 @@ const UserGraqhQl = {
   },
 
   login: async ({ email, password }) => {
-    const user = await standAloneFunctions.getUserByEmail(email);
+    const user = await UserFunctions.getDocumentByValue({ email });
     if (!user)
       return new GraphQlResponse(404, false, "Email Is Not Registered!");
 
@@ -54,7 +61,7 @@ const UserGraqhQl = {
     if (!match)
       return new GraphQlResponse(403, false, "Incorrect Credentials!");
 
-    const token = standAloneFunctions.getToken(user); // generate a token if no erros.
+    const token = AuthFunctions.getToken(user); // generate a token if no erros.
 
     return new GraphQlResponseWithToken(
       200,
@@ -73,8 +80,8 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Can't Add Your Self!");
     //   need transaction here
     try {
-      const friend = await standAloneFunctions.getUserByid(friendId);
-      const currentUser = await standAloneFunctions.getUserByid(user.id);
+      const friend = await UserFunctions.getDocumentById(friendId);
+      const currentUser = await UserFunctions.getDocumentById(user.id);
       if (!currentUser || !friend) {
         return new GraphQlResponse(404, false, "User Not Found!");
       }
@@ -99,12 +106,12 @@ const UserGraqhQl = {
         friend.friends.push(user.id);
         currentUser.friends.push(friendId);
         currentUser.friendRequests.pull(friendId);
-        await standAloneFunctions.saveUser(currentUser);
-        await standAloneFunctions.saveUser(friend);
+        await UserFunctions.saveDocument(currentUser);
+        await UserFunctions.saveDocument(friend);
         return new GraphQlResponse(200, true, "You Are Friends Now!");
       }
       friend.friendRequests.push(user.id);
-      await standAloneFunctions.saveUser(friend);
+      await UserFunctions.saveDocument(friend);
       pubsub.publish("FRIEND_REQUEST_RECIEVED", {
         friendRequests: [currentUser, friend],
       });
@@ -115,26 +122,4 @@ const UserGraqhQl = {
   },
 };
 
-const standAloneFunctions = {
-  getUserByEmail: async (email) => {
-    return await User.findOne({ email });
-  },
-  getUserByid: async (id) => {
-    return await User.findById({ id });
-  },
-  saveUser: async (user) => {
-    return await user.save();
-  },
-  getToken: ({ id, username, email }) =>
-    jwt.sign(
-      {
-        id,
-        username,
-        email,
-      },
-      process.env.SECRET,
-      { expiresIn: "1d" }
-    ),
-};
-
-module.exports = { UserGraqhQl, standAloneFunctions };
+module.exports = { UserGraqhQl };

@@ -1,4 +1,5 @@
-const { UserGraqhQl, standAloneFunctions } = require("../Users/User");
+const { UserGraqhQl } = require("../Users/User");
+const mongoFunctions = require("../utils/mongo.utils");
 const sinon = require("sinon");
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
@@ -21,18 +22,22 @@ describe("User Model Test", () => {
     });
 
     it("should register a user", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByEmail").returns(false);
-      sandbox.stub(standAloneFunctions, "saveUser").callsFake((args) => ({
-        _id: args._id,
-        _doc: {
-          email: args.email,
-          username: args.username,
-          password: args.password,
-          friendRequests: args.friendRequests,
-          friends: args.friendRequests,
-          registered_at: args.registered_at,
-        },
-      }));
+      sandbox
+        .stub(mongoFunctions.prototype, "getDocumentByValue")
+        .returns(false);
+      sandbox
+        .stub(mongoFunctions.prototype, "saveDocument")
+        .callsFake((args) => ({
+          _id: args._id,
+          _doc: {
+            email: args.email,
+            username: args.username,
+            password: args.password,
+            friendRequests: args.friendRequests,
+            friends: args.friendRequests,
+            registered_at: args.registered_at,
+          },
+        }));
       const res = await UserGraqhQl.registerNewUser(validRegisterUser);
       expect(res.code).toEqual(200);
       expect(res.success).toEqual(true);
@@ -40,7 +45,9 @@ describe("User Model Test", () => {
     });
 
     it("should not register if User already exists", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByEmail").returns(true);
+      sandbox
+        .stub(mongoFunctions.prototype, "getDocumentByValue")
+        .returns(true);
       const res = await UserGraqhQl.registerNewUser(validRegisterUser);
       expect(res.code).toEqual(403);
       expect(res.success).toEqual(false);
@@ -66,21 +73,27 @@ describe("User Model Test", () => {
       sandbox.restore();
     });
     it("should login User", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByEmail").returns(true);
+      sandbox
+        .stub(mongoFunctions.prototype, "getDocumentByValue")
+        .returns(true);
       sandbox.stub(bcrypt, "compare").returns(true);
       const res = await UserGraqhQl.login(ValidLoginUser);
       expect(res.code).toEqual(200);
     });
 
     it("should not login User if wrong password", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByEmail").returns(true);
-      const bcryptStub = sandbox.stub(bcrypt, "compare").returns(false);
+      sandbox
+        .stub(mongoFunctions.prototype, "getDocumentByValue")
+        .returns(true);
+      sandbox.stub(bcrypt, "compare").returns(false);
       const res = await UserGraqhQl.login(ValidLoginUser);
       expect(res.code).toEqual(403);
     });
 
     it("should not login User if wrong email", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByEmail").returns(false);
+      sandbox
+        .stub(mongoFunctions.prototype, "getDocumentByValue")
+        .returns(false);
       const res = await UserGraqhQl.login(ValidLoginUser);
       expect(res.code).toEqual(404);
     });
@@ -93,12 +106,12 @@ describe("User Model Test", () => {
     it("should send friend request", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(standAloneFunctions, "getUserByid")
+        .stub(mongoFunctions.prototype, "getDocumentById")
         .onFirstCall()
         .returns({ id: "1234", friendRequests: [], friends: [] })
         .onSecondCall()
         .returns({ id: "123", friendRequests: [], friends: [] });
-      sandbox.stub(standAloneFunctions, "saveUser").returns(null);
+      sandbox.stub(mongoFunctions.prototype, "saveDocument").returns(null);
       const res = await UserGraqhQl.sendFriendRequest(
         { id: "1234" },
         "123",
@@ -125,7 +138,7 @@ describe("User Model Test", () => {
       expect(res.success).toEqual(false);
     });
     it("should not send if no friend or user found", async () => {
-      sandbox.stub(standAloneFunctions, "getUserByid").returns(false);
+      sandbox.stub(mongoFunctions.prototype, "getDocumentById").returns(false);
       const res = await UserGraqhQl.sendFriendRequest({}, "123", pubsub);
       expect(res.code).toEqual(404);
       expect(res.message).toEqual("User Not Found!");
@@ -144,12 +157,12 @@ describe("User Model Test", () => {
     it("should not send if friend and user are already friends", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(standAloneFunctions, "getUserByid")
+        .stub(mongoFunctions.prototype, "getDocumentById")
         .onFirstCall()
         .returns({ id: "123", friendRequests: [], friends: ["1234"] })
         .onSecondCall()
         .returns({ id: "1234", friendRequests: [], friends: ["123"] });
-      sandbox.stub(standAloneFunctions, "saveUser").returns(null);
+      sandbox.stub(mongoFunctions.prototype, "saveDocument").returns(null);
       const res = await UserGraqhQl.sendFriendRequest(
         { id: "1234" },
         "123",
@@ -162,12 +175,12 @@ describe("User Model Test", () => {
     it("should not send if there is a pending friend request", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(standAloneFunctions, "getUserByid")
+        .stub(mongoFunctions.prototype, "getDocumentById")
         .onFirstCall()
         .returns({ id: "123", friendRequests: ["1234"], friends: [] })
         .onSecondCall()
         .returns({ id: "1234", friendRequests: [], friends: [] });
-      sandbox.stub(standAloneFunctions, "saveUser").returns(null);
+      sandbox.stub(mongoFunctions.prototype, "saveDocument").returns(null);
       const res = await UserGraqhQl.sendFriendRequest(
         { id: "1234" },
         "123",
