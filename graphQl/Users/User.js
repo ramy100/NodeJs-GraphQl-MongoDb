@@ -2,17 +2,6 @@ const User = require("../../models/Users");
 const { GraphQlResponseWithToken, GraphQlResponse } = require("../Response");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { pubsub } = require("./resolver");
-const getToken = ({ id, username, email }) =>
-  jwt.sign(
-    {
-      id,
-      username,
-      email,
-    },
-    process.env.SECRET,
-    { expiresIn: "1d" }
-  );
 
 const UserGraqhQl = {
   getUser: (id) => {
@@ -27,7 +16,7 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Password Confirmation Fails!");
     }
 
-    const user = await User.findOne({ email });
+    const user = await standAloneFunctions.getUserByEmail(email);
     if (user) {
       return new GraphQlResponse(403, false, "User Already Exists!");
     }
@@ -37,8 +26,8 @@ const UserGraqhQl = {
     const newUser = new User({ username, email, password: hashedPassword });
 
     try {
-      const response = await newUser.save();
-      const token = getToken(response);
+      const response = await standAloneFunctions.saveUser(newUser);
+      const token = standAloneFunctions.getToken(response);
       const registeredUser = {
         id: response._id,
         ...response._doc,
@@ -57,7 +46,7 @@ const UserGraqhQl = {
   },
 
   login: async ({ email, password }) => {
-    const user = await User.findOne({ email });
+    const user = await standAloneFunctions.getUserByEmail(email);
     if (!user)
       return new GraphQlResponse(404, false, "Email Is Not Registered!");
 
@@ -65,7 +54,7 @@ const UserGraqhQl = {
     if (!match)
       return new GraphQlResponse(403, false, "Incorrect Credentials!");
 
-    const token = getToken(user); // generate a token if no erros.
+    const token = standAloneFunctions.getToken(user); // generate a token if no erros.
 
     return new GraphQlResponseWithToken(
       200,
@@ -125,4 +114,23 @@ const UserGraqhQl = {
   },
 };
 
-module.exports = UserGraqhQl;
+const standAloneFunctions = {
+  getUserByEmail: async (email) => {
+    return await User.findOne({ email });
+  },
+  saveUser: async (user) => {
+    return await user.save();
+  },
+  getToken: ({ id, username, email }) =>
+    jwt.sign(
+      {
+        id,
+        username,
+        email,
+      },
+      process.env.SECRET,
+      { expiresIn: "1d" }
+    ),
+};
+
+module.exports = { UserGraqhQl, standAloneFunctions };
