@@ -67,13 +67,14 @@ const UserGraqhQl = {
 
   sendFriendRequest: async (user, friendId, pubsub) => {
     if (!user) return new GraphQlResponse(403, false, "Not Logged In!");
+    if (!friendId) return new GraphQlResponse(404, false, "Friend Not Found!");
 
     if (user.id == friendId)
       return new GraphQlResponse(403, false, "Can't Add Your Self!");
     //   need transaction here
     try {
-      const friend = await User.findById(friendId);
-      const currentUser = await User.findById(user.id);
+      const friend = await standAloneFunctions.getUserByid(friendId);
+      const currentUser = await standAloneFunctions.getUserByid(user.id);
       if (!currentUser || !friend) {
         return new GraphQlResponse(404, false, "User Not Found!");
       }
@@ -98,12 +99,12 @@ const UserGraqhQl = {
         friend.friends.push(user.id);
         currentUser.friends.push(friendId);
         currentUser.friendRequests.pull(friendId);
-        await currentUser.save();
-        await friend.save();
+        await standAloneFunctions.saveUser(currentUser);
+        await standAloneFunctions.saveUser(friend);
         return new GraphQlResponse(200, true, "You Are Friends Now!");
       }
       friend.friendRequests.push(user.id);
-      await friend.save();
+      await standAloneFunctions.saveUser(friend);
       pubsub.publish("FRIEND_REQUEST_RECIEVED", {
         friendRequests: [currentUser, friend],
       });
@@ -117,6 +118,9 @@ const UserGraqhQl = {
 const standAloneFunctions = {
   getUserByEmail: async (email) => {
     return await User.findOne({ email });
+  },
+  getUserByid: async (id) => {
+    return await User.findById({ id });
   },
   saveUser: async (user) => {
     return await user.save();
