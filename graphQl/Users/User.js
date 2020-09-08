@@ -1,4 +1,4 @@
-const User = require("../../models/Users");
+const User = require("./User.model");
 const { GraphQlResponseWithToken, GraphQlResponse } = require("../Response");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
