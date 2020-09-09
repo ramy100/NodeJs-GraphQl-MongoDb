@@ -1,4 +1,4 @@
-const UserGraqhQl = require("./User");
+const { UserGraqhQl } = require("./User");
 require("dotenv").config();
 const { withFilter } = require("apollo-server");
 

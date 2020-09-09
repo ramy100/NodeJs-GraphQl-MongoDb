@@ -1,10 +1,7 @@
 const User = require("./User.model");
 const { GraphQlResponseWithToken, GraphQlResponse } = require("../Response");
 const bcrypt = require("bcryptjs");
-const MongoFunctions = require("../utils/mongo.utils");
 const AuthFunctions = require("../utils/auth.utils");
-
-const UserFunctions = new MongoFunctions(User);
 
 const UserGraqhQl = {
   getUser: (id) => {
@@ -19,21 +16,21 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Password Confirmation Fails!");
     }
 
-    const user = await UserFunctions.getDocumentByValue({ email });
+    const user = await User.findOne({ email });
     if (user) {
       return new GraphQlResponse(403, false, "User Already Exists!");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = UserFunctions.createNewObject({
+    const newUser = new User({
       username,
       email,
       password: hashedPassword,
     });
 
     try {
-      const response = await UserFunctions.saveDocument(newUser);
+      const response = await User.collection.save(newUser);
       const token = AuthFunctions.getToken(response);
       const registeredUser = {
         id: response._id,
@@ -53,7 +50,7 @@ const UserGraqhQl = {
   },
 
   login: async ({ email, password }) => {
-    const user = await UserFunctions.getDocumentByValue({ email });
+    const user = await User.findOne({ email });
     if (!user)
       return new GraphQlResponse(404, false, "Email Is Not Registered!");
 
@@ -80,8 +77,8 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Can't Add Your Self!");
     //   need transaction here
     try {
-      const friend = await UserFunctions.getDocumentById(friendId);
-      const currentUser = await UserFunctions.getDocumentById(user.id);
+      const friend = await User.find(friendId);
+      const currentUser = await User.find(user.id);
       if (!currentUser || !friend) {
         return new GraphQlResponse(404, false, "User Not Found!");
       }
@@ -106,12 +103,12 @@ const UserGraqhQl = {
         friend.friends.push(user.id);
         currentUser.friends.push(friendId);
         currentUser.friendRequests.pull(friendId);
-        await UserFunctions.saveDocument(currentUser);
-        await UserFunctions.saveDocument(friend);
+        await User.collection.save(currentUser);
+        await User.collection.save(friend);
         return new GraphQlResponse(200, true, "You Are Friends Now!");
       }
       friend.friendRequests.push(user.id);
-      await UserFunctions.saveDocument(friend);
+      await User.collection.save(friend);
       pubsub.publish("FRIEND_REQUEST_RECIEVED", {
         friendRequests: [currentUser, friend],
       });
