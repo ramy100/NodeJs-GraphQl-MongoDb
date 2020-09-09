@@ -30,40 +30,6 @@ const userTypeDef = gql`
     success: Boolean!
     message: String!
   }
-
-  type Query {
-    user(id: String!): User
-    users: [User]
-  }
-
-  type Mutation {
-    register(newUser: RegisterUserInput): registerOrLoginResponse!
-    login(userInfo: LoginUserInput): registerOrLoginResponse!
-    sendFriendRequest(friendId: ID!): response
-  }
-
-  interface mutationResponse {
-    code: String!
-    success: Boolean!
-    message: String!
-  }
-
-  interface token {
-    token: String
-    user: User
-  }
-  input RegisterUserInput {
-    username: String!
-    email: String!
-    password: String!
-    confirmPassword: String!
-    avatar: String
-  }
-
-  input LoginUserInput {
-    email: String!
-    password: String!
-  }
 `;
 
 module.exports = {

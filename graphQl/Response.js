@@ -21,5 +21,20 @@ class GraphQlResponseWithToken extends GraphQlResponse {
     this.user = user;
   }
 }
+class GraphQlResponseWithChat extends GraphQlResponse {
+  token;
+  user;
+  constructor(code, success, message, chatMessage) {
+    super();
+    this.code = code;
+    this.success = success;
+    this.message = message;
+    this.chatMessage = chatMessage;
+  }
+}
 
-module.exports = { GraphQlResponse, GraphQlResponseWithToken };
+module.exports = {
+  GraphQlResponse,
+  GraphQlResponseWithToken,
+  GraphQlResponseWithChat,
+};
