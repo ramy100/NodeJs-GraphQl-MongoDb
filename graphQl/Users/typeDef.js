@@ -13,6 +13,7 @@ const userTypeDef = gql`
     email: String!
     avatar: String!
     friends: [User]!
+    friendRequests: [User]!
     registered_at: DateTime!
     deactivated_at: DateTime
   }

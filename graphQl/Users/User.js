@@ -5,10 +5,10 @@ const AuthFunctions = require("../utils/auth.utils");
 
 const UserGraqhQl = {
   getUser: (id) => {
-    return User.findById(id).populate("friends");
+    return User.findById(id).populate(["friends", "friendRequests"]);
   },
   getAll: () => {
-    return User.find().populate("friends");
+    return User.find().populate(["friends", "friendRequests"]);
   },
 
   registerNewUser: async ({ email, username, password, confirmPassword }) => {
@@ -77,8 +77,8 @@ const UserGraqhQl = {
       return new GraphQlResponse(403, false, "Can't Add Your Self!");
     //   need transaction here
     try {
-      const friend = await User.find(friendId);
-      const currentUser = await User.find(user.id);
+      const friend = await User.findById(friendId);
+      const currentUser = await User.findById(user.id);
       if (!currentUser || !friend) {
         return new GraphQlResponse(404, false, "User Not Found!");
       }

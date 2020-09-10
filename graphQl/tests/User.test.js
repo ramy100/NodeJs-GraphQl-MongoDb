@@ -4,6 +4,7 @@ require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const { PubSub } = require("apollo-server");
 const User = require("../Users/User.model");
+const Mongoose = require("mongoose");
 
 const pubsub = new PubSub();
 const sandbox = sinon.createSandbox();
@@ -94,7 +95,7 @@ describe("User Model Test", () => {
     it("should send friend request", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(User, "find")
+        .stub(User, "findById")
         .onFirstCall()
         .returns({ id: "1234", friendRequests: [], friends: [] })
         .onSecondCall()
@@ -126,7 +127,7 @@ describe("User Model Test", () => {
       expect(res.success).toEqual(false);
     });
     it("should not send if no friend or user found", async () => {
-      sandbox.stub(User, "find").returns(false);
+      sandbox.stub(User, "findById").returns(false);
       const res = await UserGraqhQl.sendFriendRequest({}, "123", pubsub);
       expect(res.code).toEqual(404);
       expect(res.message).toEqual("User Not Found!");
@@ -145,7 +146,7 @@ describe("User Model Test", () => {
     it("should not send if friend and user are already friends", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(User, "find")
+        .stub(User, "findById")
         .onFirstCall()
         .returns({ id: "123", friendRequests: [], friends: ["1234"] })
         .onSecondCall()
@@ -163,7 +164,7 @@ describe("User Model Test", () => {
     it("should not send if there is a pending friend request", async () => {
       sandbox.stub(pubsub, "publish").returns(null);
       sandbox
-        .stub(User, "find")
+        .stub(User, "findById")
         .onFirstCall()
         .returns({ id: "123", friendRequests: ["1234"], friends: [] })
         .onSecondCall()
