@@ -69,7 +69,7 @@ const UserGraqhQl = {
     );
   },
 
-  sendFriendRequest: async (user, friendId, pubsub) => {
+  sendOrAcceptFriendRequest: async (user, friendId, pubsub) => {
     if (!user) return new GraphQlResponse(403, false, "Not Logged In!");
     if (!friendId) return new GraphQlResponse(404, false, "Friend Not Found!");
 
@@ -107,7 +107,7 @@ const UserGraqhQl = {
         await User.collection.save(friend);
         pubsub.publish("FRIEND_REQUEST_RECIEVED", {
           friendRequests: {
-            sendingUser: {
+            fromUser: {
               id: currentUser.id,
               username: currentUser.username,
               avatar: currentUser.avatar,
@@ -130,7 +130,7 @@ const UserGraqhQl = {
       await User.collection.save(friend);
       pubsub.publish("FRIEND_REQUEST_RECIEVED", {
         friendRequests: {
-          sendingUser: {
+          fromUser: {
             id: currentUser.id,
             username: currentUser.username,
             avatar: currentUser.avatar,

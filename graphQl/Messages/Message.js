@@ -8,12 +8,12 @@ const MessagesGraphQl = {
     //   from: { $in: [userId, friendId], to: { $in: [userId, friendId] } },
     // });
   },
-  sendMessage: async (userId, friendId, content) => {
+  sendMessage: async (userId, friendId, content, pubsub) => {
     if (!userId || !friendId)
       return new GraphQlResponse(404, false, "User Not Found!");
 
-    const currentUser = await UserModel.find(userId);
-    const friend = await UserModel.find(friendId);
+    const currentUser = await UserModel.findById(userId);
+    const friend = await UserModel.findById(friendId);
 
     if (!currentUser || !friend)
       return new GraphQlResponse(404, false, "User Not Found!");
@@ -24,13 +24,21 @@ const MessagesGraphQl = {
     )
       return new GraphQlResponse(403, false, "You Are Not Friends!");
 
-    const newMessage = new MessageModel({
-      from: userId,
-      to: friendId,
-      content,
-    });
     try {
+      const newMessage = new MessageModel({
+        from: userId,
+        to: friendId,
+        content,
+      });
       await newMessage.collection.save(newMessage);
+      pubsub.publish("NEW_CHAT_MESSAGE", {
+        chatMessages: {
+          id: newMessage._id,
+          from: currentUser,
+          to: friend,
+          content,
+        },
+      });
       return new GraphQlResponseWithChat(
         200,
         true,
@@ -38,6 +46,7 @@ const MessagesGraphQl = {
         newMessage
       );
     } catch (error) {
+      console.log(error);
       return new GraphQlResponse(500, false, "server error");
     }
   },

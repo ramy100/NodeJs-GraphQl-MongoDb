@@ -12,7 +12,13 @@ const messageTypeDefs = gql`
     code: String!
     success: Boolean!
     message: String!
-    chatMessage: Message!
+    chatMessage: Message
+  }
+
+  type chatMessages {
+    to: String!
+    from: String!
+    content: String!
   }
 `;
 

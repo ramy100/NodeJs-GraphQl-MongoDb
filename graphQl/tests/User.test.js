@@ -101,7 +101,7 @@ describe("User Model Test", () => {
         .onSecondCall()
         .returns({ id: "123", friendRequests: [], friends: [] });
       sandbox.stub(User.collection, "save").returns(null);
-      const res = await UserGraqhQl.sendFriendRequest(
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
         { id: "1234" },
         "123",
         pubsub
@@ -111,7 +111,7 @@ describe("User Model Test", () => {
       expect(res.success).toEqual(true);
     });
     it("should not send if no user", async () => {
-      const res = await UserGraqhQl.sendFriendRequest(
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
         null,
         { id: "1234" },
         pubsub
@@ -121,20 +121,24 @@ describe("User Model Test", () => {
       expect(res.success).toEqual(false);
     });
     it("should not send if no friend", async () => {
-      const res = await UserGraqhQl.sendFriendRequest({}, null, pubsub);
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest({}, null, pubsub);
       expect(res.code).toEqual(404);
       expect(res.message).toEqual("Friend Not Found!");
       expect(res.success).toEqual(false);
     });
     it("should not send if no friend or user found", async () => {
       sandbox.stub(User, "findById").returns(false);
-      const res = await UserGraqhQl.sendFriendRequest({}, "123", pubsub);
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
+        {},
+        "123",
+        pubsub
+      );
       expect(res.code).toEqual(404);
       expect(res.message).toEqual("User Not Found!");
       expect(res.success).toEqual(false);
     });
     it("should not send if friend and user are equal", async () => {
-      const res = await UserGraqhQl.sendFriendRequest(
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
         { id: "123" },
         "123",
         pubsub
@@ -152,7 +156,7 @@ describe("User Model Test", () => {
         .onSecondCall()
         .returns({ id: "1234", friendRequests: [], friends: ["123"] });
       sandbox.stub(User.collection, "save").returns(null);
-      const res = await UserGraqhQl.sendFriendRequest(
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
         { id: "1234" },
         "123",
         pubsub
@@ -170,7 +174,7 @@ describe("User Model Test", () => {
         .onSecondCall()
         .returns({ id: "1234", friendRequests: [], friends: [] });
       sandbox.stub(User.collection, "save").returns(null);
-      const res = await UserGraqhQl.sendFriendRequest(
+      const res = await UserGraqhQl.sendOrAcceptFriendRequest(
         { id: "1234" },
         "123",
         pubsub

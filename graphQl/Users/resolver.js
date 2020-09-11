@@ -13,8 +13,8 @@ const Mutation = {
 
   login: (_, { userInfo }) => UserGraqhQl.login(userInfo),
 
-  sendFriendRequest: (_, { friendId }, { user, pubsub }) =>
-    UserGraqhQl.sendFriendRequest(user, friendId, pubsub),
+  sendOrAcceptFriendRequest: (_, { friendId }, { user, pubsub }) =>
+    UserGraqhQl.sendOrAcceptFriendRequest(user, friendId, pubsub),
 
   deleteAllFriendRequests: async () => {
     await User.updateMany({}, { $set: { friendRequests: [], friends: [] } });
@@ -35,6 +35,18 @@ const Subscription = {
         return (
           payload.friendRequests.toUser.id === variables.userId &&
           payload.friendRequests.toUser.id === context.user.id
+        );
+      }
+    ),
+  },
+  chatMessages: {
+    // Additional event labels can be passed to asyncIterator creation
+    subscribe: withFilter(
+      (_, __, { pubsub }) => pubsub.asyncIterator("NEW_CHAT_MESSAGE"),
+      (payload, variables, context) => {
+        return (
+          payload.chatMessages.to._id == variables.userId &&
+          payload.chatMessages.to._id == context.user.id
         );
       }
     ),

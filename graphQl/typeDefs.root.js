@@ -33,10 +33,15 @@ const rootTypeDef = gql`
   type Mutation {
     register(newUser: RegisterUserInput): registerOrLoginResponse!
     login(userInfo: LoginUserInput): registerOrLoginResponse!
-    sendFriendRequest(friendId: ID!): response
+    sendOrAcceptFriendRequest(friendId: ID!): response
     sendMessage(friendId: ID!, content: String): MessageResponse!
     deleteAllFriendRequests: Boolean!
     deleteAllUsers: Boolean!
+  }
+
+  type Subscription {
+    chatMessages(userId: ID!): Message!
+    friendRequests(userId: ID!): FriendRequest
   }
 `;
 
