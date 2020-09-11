@@ -35,6 +35,8 @@ const rootTypeDef = gql`
     login(userInfo: LoginUserInput): registerOrLoginResponse!
     sendFriendRequest(friendId: ID!): response
     sendMessage(friendId: ID!, content: String): MessageResponse!
+    deleteAllFriendRequests: Boolean!
+    deleteAllUsers: Boolean!
   }
 `;
 

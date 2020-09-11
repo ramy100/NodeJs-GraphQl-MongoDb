@@ -105,12 +105,47 @@ const UserGraqhQl = {
         currentUser.friendRequests.pull(friendId);
         await User.collection.save(currentUser);
         await User.collection.save(friend);
+        pubsub.publish("FRIEND_REQUEST_RECIEVED", {
+          friendRequests: {
+            sendingUser: {
+              id: currentUser.id,
+              username: currentUser.username,
+              avatar: currentUser.avatar,
+              friend: currentUser.friends,
+              email: currentUser.email,
+            },
+            toUser: {
+              id: friend.id,
+              username: friend.username,
+              avatar: friend.avatar,
+              friend: friend.friends,
+              email: friend.email,
+            },
+            status: "confirmed",
+          },
+        });
         return new GraphQlResponse(200, true, "You Are Friends Now!");
       }
       friend.friendRequests.push(user.id);
       await User.collection.save(friend);
       pubsub.publish("FRIEND_REQUEST_RECIEVED", {
-        friendRequests: [currentUser, friend],
+        friendRequests: {
+          sendingUser: {
+            id: currentUser.id,
+            username: currentUser.username,
+            avatar: currentUser.avatar,
+            friend: currentUser.friends,
+            email: currentUser.email,
+          },
+          toUser: {
+            id: friend.id,
+            username: friend.username,
+            avatar: friend.avatar,
+            friend: friend.friends,
+            email: friend.email,
+          },
+          status: "pending",
+        },
       });
     } catch (error) {
       return new GraphQlResponse(500, false, "Server Error!");

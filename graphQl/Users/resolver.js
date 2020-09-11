@@ -1,6 +1,7 @@
 const { UserGraqhQl } = require("./User");
 require("dotenv").config();
 const { withFilter } = require("apollo-server");
+const User = require("./User.model");
 
 const Query = {
   user: (_, { id }) => UserGraqhQl.getUser(id),
@@ -14,6 +15,15 @@ const Mutation = {
 
   sendFriendRequest: (_, { friendId }, { user, pubsub }) =>
     UserGraqhQl.sendFriendRequest(user, friendId, pubsub),
+
+  deleteAllFriendRequests: async () => {
+    await User.updateMany({}, { $set: { friendRequests: [], friends: [] } });
+    return true;
+  },
+  deleteAllUsers: async () => {
+    await User.deleteMany({});
+    return true;
+  },
 };
 
 const Subscription = {
@@ -21,8 +31,11 @@ const Subscription = {
     // Additional event labels can be passed to asyncIterator creation
     subscribe: withFilter(
       (_, __, { pubsub }) => pubsub.asyncIterator("FRIEND_REQUEST_RECIEVED"),
-      (payload, variables) => {
-        return payload.friendRequests[1].id === variables.userId;
+      (payload, variables, context) => {
+        return (
+          payload.friendRequests.toUser.id === variables.userId &&
+          payload.friendRequests.toUser.id === context.user.id
+        );
       }
     ),
   },

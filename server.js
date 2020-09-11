@@ -8,8 +8,13 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   subscriptions: {
-    onConnect: () => {
-      console.log("connected");
+    onConnect: (params, websocket) => {
+      const token = params.authorization;
+      if (token) {
+        const user = AuthFunctions.VerifyToken(token);
+        return { user };
+      }
+      throw new Error("Not Logged In!");
     },
     onDisconnect: () => {
       console.log("dc");
@@ -19,11 +24,7 @@ const server = new ApolloServer({
   context: ({ req, connection }) => {
     const returnObj = {};
     if (connection) {
-      const token = connection.context.authorization;
-      if (token) {
-        const user = AuthFunctions.VerifyToken(token);
-        returnObj.user = user;
-      }
+      returnObj.user = connection.context.user;
     } else {
       const token = req.headers.authorization || "";
       if (token) {
