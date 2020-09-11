@@ -13,22 +13,15 @@ class GraphQlResponseWithToken extends GraphQlResponse {
   token;
   user;
   constructor(code, success, message, token, user) {
-    super();
-    this.code = code;
-    this.success = success;
-    this.message = message;
+    super(code, success, message);
     this.token = token;
     this.user = user;
   }
 }
 class GraphQlResponseWithChat extends GraphQlResponse {
-  token;
-  user;
+  chatMessage;
   constructor(code, success, message, chatMessage) {
-    super();
-    this.code = code;
-    this.success = success;
-    this.message = message;
+    super(code, success, message);
     this.chatMessage = chatMessage;
   }
 }

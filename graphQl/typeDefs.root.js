@@ -38,11 +38,6 @@ const rootTypeDef = gql`
     deleteAllFriendRequests: Boolean!
     deleteAllUsers: Boolean!
   }
-
-  type Subscription {
-    chatMessages(userId: ID!): Message!
-    friendRequests(userId: ID!): FriendRequest
-  }
 `;
 
 module.exports = { rootTypeDef };

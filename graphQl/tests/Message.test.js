@@ -1,3 +1,4 @@
+const { PubSub } = require("apollo-server");
 const sinon = require("sinon");
 const { MessagesGraphQl } = require("../Messages/Message");
 const MessageModel = require("../Messages/Message.model");
@@ -13,12 +14,18 @@ describe("Messages Tests", () => {
     it("should send message if friends", async () => {
       sandbox.stub(MessageModel.collection, "save").returns(true);
       sandbox
-        .stub(UserModel, "find")
+        .stub(UserModel, "findById")
         .onCall(0)
         .returns({ friends: [friendId] })
         .onCall(1)
         .returns({ friends: [userId] });
-      const res = await MessagesGraphQl.sendMessage(userId, friendId, "soso");
+      sandbox.stub(PubSub.prototype, "publish").returns(true);
+      const res = await MessagesGraphQl.sendMessage(
+        userId,
+        friendId,
+        "soso",
+        new PubSub()
+      );
       expect(res.code).toEqual(200);
       expect(res.success).toEqual(true);
       expect(res.message).toEqual("Message Sent Successfully!");
@@ -36,7 +43,7 @@ describe("Messages Tests", () => {
     });
 
     it("should not send message if user or friend not found", async () => {
-      sandbox.stub(UserModel, "find").returns(false);
+      sandbox.stub(UserModel, "findById").returns(false);
       const res = await MessagesGraphQl.sendMessage(userId, friendId, "soso");
       expect(res.code).toEqual(404);
       expect(res.success).toEqual(false);
@@ -46,7 +53,7 @@ describe("Messages Tests", () => {
     it("should not send message if not friends", async () => {
       sandbox.stub(MessageModel.collection, "save").returns(true);
       sandbox
-        .stub(UserModel, "find")
+        .stub(UserModel, "findById")
         .onCall(0)
         .returns({ friends: [] })
         .onCall(1)

@@ -1,6 +1,5 @@
 const { UserGraqhQl } = require("./User");
 require("dotenv").config();
-const { withFilter } = require("apollo-server");
 const User = require("./User.model");
 
 const Query = {
@@ -26,33 +25,6 @@ const Mutation = {
   },
 };
 
-const Subscription = {
-  friendRequests: {
-    // Additional event labels can be passed to asyncIterator creation
-    subscribe: withFilter(
-      (_, __, { pubsub }) => pubsub.asyncIterator("FRIEND_REQUEST_RECIEVED"),
-      (payload, variables, context) => {
-        return (
-          payload.friendRequests.toUser.id === variables.userId &&
-          payload.friendRequests.toUser.id === context.user.id
-        );
-      }
-    ),
-  },
-  chatMessages: {
-    // Additional event labels can be passed to asyncIterator creation
-    subscribe: withFilter(
-      (_, __, { pubsub }) => pubsub.asyncIterator("NEW_CHAT_MESSAGE"),
-      (payload, variables, context) => {
-        return (
-          payload.chatMessages.to._id == variables.userId &&
-          payload.chatMessages.to._id == context.user.id
-        );
-      }
-    ),
-  },
-};
-
 const token = {
   __resolveType() {
     return null;
@@ -70,7 +42,6 @@ const userResolver = {
   token,
   Query,
   Mutation,
-  Subscription,
 };
 
 module.exports = {
